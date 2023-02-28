@@ -1,3 +1,5 @@
+import json
+
 import scipy
 import numpy as np
 from scipy.optimize import minimize, show_options
@@ -12,26 +14,8 @@ from models import Camembert
 class Optimizer:
     def __init__(self, options):
         self.options = options
-        compiler_options = {
-            'c': {
-                'cc': 'gcc',
-                'language': 'c',
-                'cflags': '-O3 -fPIC -ffast-math -Wall -std=c99 -shared'},
-            'cpu_openmp': {
-                'cc': 'gcc',
-                'language': 'cpu_openmp',
-                'cflags': '-O3 -fPIC -ffast-math -Wall -std=c99 -shared -fopenmp'},
-            'gpu_openmp': {
-                'cc': 'clang',
-                'language': 'gpu_openmp',
-                'cflags': '-O3 -fPIC -ffast-math -fopenmp \
-                           -fopenmp-targets=nvptx64-nvidia-cuda \
-                           -Xopenmp-target -march=sm_75'},
-            'gpu_openacc': {
-                'cc': 'pgcc',
-                'language': 'gpu_openacc',
-                'cflags': '-O3 -fPIC -acc:gpu -gpu=pinned -mp'},
-        }
+        with open(".compiler_options.json") as f:
+            compiler_options = json.load(f)
         selected_compiler = compiler_options['cpu_openmp']
         self.compiler = Compiler(
             cc=selected_compiler['cc'],
@@ -146,11 +130,7 @@ class Optimizer:
             space_model, time_model, source, receivers, wavelet)
         u, recv = solver.forward()
         if seis:
-            plot_shotrecord(
-                recv,
-                file_name=name +
-                "_seismogram",
-                solver=solver)
+            plot_shotrecord(recv,file_name=name + "_seismogram", solver=solver)
         if recv_true is not None and stride != 0:
             res = recv - recv_true
             f_obj = np.linalg.norm(
@@ -168,7 +148,6 @@ class Optimizer:
                 vel_model, source_location, recv_true=recv_true_all[i], stride=1, name=name + "_shot_" + str(i))
             f_obj += f
             grad += g
-        # print(f"At counter {self.counter}, fobj = {f_obj}")
         return f_obj, grad
 
     def sequential_forward(self, vel_model):
