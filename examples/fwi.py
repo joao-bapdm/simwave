@@ -42,7 +42,7 @@ class Optimizer:
         self._recv_true = None
         self._stride = 1
         self._name = ""
-        self.counter = 1
+        self.counter = 0
 
     @property
     def recv_true(self):
@@ -136,7 +136,7 @@ class Optimizer:
         return solver
 
     def forward(self, vel_model, source_location, recv_true=None,
-                stride=1, name="", plot=True, acq=False, seis=False):
+                stride=1, name="", seis=False):
         space_model = self.create_space_model(vel_model)
         time_model = self.create_time_model(space_model, stride=stride)
         source = self.create_source(space_model, source_location)
@@ -145,22 +145,12 @@ class Optimizer:
         solver = self.create_solver(
             space_model, time_model, source, receivers, wavelet)
         u, recv = solver.forward()
-        if plot:
-            if acq:
-                plot_velocity_model(vel_model,
-                                    sources=solver.sources.grid_positions,
-                                    receivers=solver.receivers.grid_positions,
-                                    file_name=name + "_model")
-            elif self.counter:
-                if name.endswith("0"):
-                    plot_velocity_model(
-                        vel_model, file_name=name + "_it_" + str(self.counter) + "_model")
-            if seis:
-                plot_shotrecord(
-                    recv,
-                    file_name=name +
-                    "_seismogram",
-                    solver=solver)
+        if seis:
+            plot_shotrecord(
+                recv,
+                file_name=name +
+                "_seismogram",
+                solver=solver)
         if recv_true is not None and stride != 0:
             res = recv - recv_true
             f_obj = np.linalg.norm(
@@ -171,11 +161,11 @@ class Optimizer:
             return u, recv
 
     def _seq_fwd(self, vel_model, source_locations,
-                 recv_true_all=None, stride=1, name="", plot=True):
+                 recv_true_all=None, stride=1, name=""):
         f_obj, grad = 0, 0
         for i, source_location in enumerate(source_locations):
             f, g = self.forward(
-                vel_model, source_location, recv_true=recv_true_all[i], stride=1, name=name + "_shot_" + str(i), plot=plot)
+                vel_model, source_location, recv_true=recv_true_all[i], stride=1, name=name + "_shot_" + str(i))
             f_obj += f
             grad += g
         # print(f"At counter {self.counter}, fobj = {f_obj}")
@@ -189,7 +179,15 @@ class Optimizer:
             stride=self.stride,
             name=self.name)
         plot_velocity_model(g, file_name=Op.name + "_grad")
-        self.counter += 0
+        plot_velocity_model(
+            vel_model.reshape(
+                self.options["space_options"]["shape"]),
+            file_name=Op.name +
+            "_model" +
+            "_it_" +
+            str(
+                self.counter))
+        self.counter += 1
         return f, self.crop_field(g).flatten()
 
     def plot_acquisition(self, vel_model, source_location, name=""):
@@ -229,7 +227,7 @@ if __name__ == '__main__':
             vp,
             src,
             stride=0,
-            name="ground_truth", seis=True)[1] for src in src_loc]
+            name="shot" + str(src), seis=True)[1] for src in src_loc]
     Op.name = "Camembert"
 
     # Optimize
