@@ -1,10 +1,14 @@
+import logging
+
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 from matplotlib import cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+from ..utils import verbosity_control
 
+@verbosity_control(level=logging.INFO)
 def plot_wavefield(wavefield, file_name="wavefield", colorbar=True,
                    cmap="gray", solver=None, show=False, clim=[-5, 5]):
     """
@@ -72,7 +76,8 @@ def plot_wavefield(wavefield, file_name="wavefield", colorbar=True,
 
     plt.close()
 
-    print("Wavefield saved in plots/{}.png".format(file_name))
+    # print("Wavefield saved in plots/{}.png".format(file_name))
+    logging.info("Wavefield saved in plots/{}.png".format(file_name))
 
 
 def plot_shotrecord(rec, file_name="shotrecord", colorbar=True,
@@ -215,7 +220,8 @@ def plot_velocity_model(model, sources=None, receivers=None,
 
     plt.close()
 
-    print("Velocity model saved in plots/{}.png".format(file_name))
+    # print("Velocity model saved in plots/{}.png".format(file_name))
+    logging.info("Velocity model saved in plots/{}.png".format(file_name))
 
 
 def plot_wavelet(time_values, wavelet_values,
