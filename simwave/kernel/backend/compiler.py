@@ -1,6 +1,8 @@
 import os
+import logging
 from hashlib import sha1
 
+from ...utils import verbosity_control
 
 class Compiler:
     """
@@ -111,6 +113,7 @@ class Compiler:
 
         return omp_flag.get(self.cc)
 
+    @verbosity_control(level=logging.INFO)
     def compile(self, dimension, density, float_precision, operator):
         """
         Compile the program.
@@ -198,7 +201,7 @@ class Compiler:
 
         # check if object_file already exists
         if os.path.exists(object_path):
-            print("Shared object already compiled in:", object_path)
+            logging.info(f"Shared object already compiled in: {object_path}")
         else:
             cmd = (
                 self.cc

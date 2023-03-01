@@ -1,7 +1,11 @@
+import logging
+
 import ctypes
 import numpy as np
 from numpy.ctypeslib import ndpointer
 from simwave.kernel.backend.compiler import Compiler
+
+from ...utils import verbosity_control
 
 
 class Middleware:
@@ -108,6 +112,7 @@ class Middleware:
         if operator == 'gradient':
             return self._exec_gradient(**kwargs)
 
+    @verbosity_control(level=logging.INFO)
     def _exec_forward(self, **kwargs):
         """
         Run the forward operator.
@@ -158,10 +163,12 @@ class Middleware:
         # run the C forward function
         exec_time = forward(*args)
 
-        print('Run forward in %f seconds.' % exec_time)
+        # print('Run forward in %f seconds.' % exec_time)
+        logging.info(f"Run forward in {exec_time} seconds.")
 
         return kwargs.get('u_full'), kwargs.get('shot_record')
 
+    @verbosity_control(level=logging.INFO)
     def _exec_gradient(self, **kwargs):
         """
         Run the adjoint and gradient operator.
@@ -210,7 +217,8 @@ class Middleware:
         # run the C gradient function
         exec_time = gradient(*args)
 
-        print('Run gradient in %f seconds.' % exec_time)
+        # print('Run gradient in %f seconds.' % exec_time)
+        logging.info(f"Run gradient in {exec_time} seconds.")
 
         return kwargs.get('grad')
 
